@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iDentist Analytics Hub | Secure Login</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #F4F1EA;         
+            --bg-gradient: linear-gradient(135deg, #F4F1EA 0%, #E8E4DB 100%);
+            --primary-dark: #0F4C5C;    
+            --accent-gold: #C5A880;     
+            --surface-white: #FFFFFF;   
+            --text-main: #2B2D42;       
+            --text-muted: #8D99AE;      
+            --border-light: rgba(197, 168, 128, 0.2); 
+            --status-green: #28A745;
+            --status-yellow: #FFC107;
+            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 10px 40px rgba(15, 76, 92, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+
+        body {
+            background-color: var(--bg-body); 
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* شاشة تسجيل الدخول */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-gradient); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; transition: opacity 0.5s;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md); width: 100%; max-width: 400px;
+            text-align: center; border-top: 4px solid var(--accent-gold);
+        }
+        .login-box .form-group { margin-bottom: 20px; text-align: right; }
+
+        /* التحكم في عرض عناصر المدير */
+        .manager-only { display: none !important; }
+        body.manager-mode .manager-only { display: flex !important; }
+        body.manager-mode .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 0 30px 30px; }
+        @media (max-width: 992px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+        .top-header {
+            background-color: var(--surface-white); padding: 15px 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);
+            border-bottom: 2px solid var(--accent-gold); position: sticky; top: 0; z-index: 100;
+        }
+        .brand { display: flex; flex-direction: column; }
+        .brand-title { font-family: 'El Messiri', sans-serif; color: var(--primary-dark); font-size: 28px; font-weight: 700; }
+        .brand-subtitle { color: var(--accent-gold); font-size: 14px; font-weight: 700; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .controls-bar { padding: 20px 30px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .filter-select, .form-input {
+            padding: 10px 15px; border: 1px solid var(--border-light); border-radius: var(--radius-md);
+            background-color: var(--surface-white); color: var(--text-main); font-size: 14px; font-weight: 500;
+            outline: none; transition: all 0.3s ease; box-shadow: var(--shadow-sm); width: 100%;
+        }
+        .filter-select:focus, .form-input:focus { border-color: var(--primary-dark); box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1); }
+        
+        .btn-primary {
+            background-color: var(--primary-dark); color: var(--surface-white); border: none; padding: 12px 24px;
+            border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; display: flex;
+            align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(15, 76, 92, 0.2);
+        }
+        .btn-primary:hover { background-color: #0b3946; transform: translateY(-2px); }
+        
+        .btn-gold {
+            background-color: var(--accent-gold); color: var(--surface-white); border: none; padding: 12px 24px;
+            border-radius: var(--radius-md); font-size: 15px; font-weight: 700; cursor: pointer; display: flex;
+            align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(197, 168, 128, 0.3);
+        }
+        .btn-gold:hover { background-color: #b0946d; transform: translateY(-2px); }
+
+        .btn-outline {
+            background-color: var(--surface-white); color: var(--primary-dark); border: 1px solid var(--primary-dark);
+            padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+        }
+        .btn-outline:hover { background-color: var(--primary-dark); color: var(--surface-white); }
+        .btn-danger { border-color: #dc3545; color: #dc3545; }
+        .btn-danger:hover { background-color: #dc3545; color: white; }
+
+        .smart-insights {
+            margin: 0 30px 20px; background: linear-gradient(135deg, var(--primary-dark), #1a6f85);
+            border-radius: var(--radius-lg); padding: 15px 25px; color: var(--surface-white);
+            display: flex; align-items: center; gap: 15px; box-shadow: var(--shadow-md);
+        }
+        .insight-icon { font-size: 24px; color: var(--accent-gold); }
+
+        .kpi-card {
+            background-color: var(--surface-white); padding: 25px; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); border-right: 4px solid var(--accent-gold);
+            display: flex; flex-direction: column; gap: 10px; transition: transform 0.3s ease;
+        }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+        .kpi-title { color: var(--text-muted); font-size: 14px; font-weight: 700; }
+        .kpi-value { color: var(--primary-dark); font-size: 28px; font-weight: 800; }
+
+        .main-content { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 0 30px 30px; }
+        .panel {
+            background-color: var(--surface-white); border-radius: var(--radius-lg); padding: 25px;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); min-height: 350px;
+            display: flex; flex-direction: column;
+        }
+        .panel-full { grid-column: 1 / -1; min-height: 400px; }
+        .panel-title { color: var(--primary-dark); font-size: 18px; font-weight: 700; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+        .chart-container { position: relative; height: 100%; width: 100%; flex-grow: 1; min-height: 250px; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(15, 76, 92, 0.4);
+            backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--surface-white); border-radius: var(--radius-lg); width: 100%;
+            max-width: 500px; padding: 30px; box-shadow: var(--shadow-md); transform: translateY(20px);
+            transition: all 0.3s ease; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-light); }
+        .modal-title { color: var(--primary-dark); font-size: 20px; font-weight: 700; font-family: 'El Messiri', sans-serif; }
+        .close-btn { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; transition: color 0.3s; }
+        .close-btn:hover { color: #dc3545; }
+        .form-label { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; display: block; }
+        .form-input[disabled] { background-color: #f0f0f0; color: #666; cursor: not-allowed; }
+        
+        .status-toggle { display: flex; gap: 10px; }
+        .status-btn {
+            flex: 1; padding: 12px; border: 2px solid var(--border-light); background-color: var(--surface-white);
+            border-radius: var(--radius-md); cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 5px; color: var(--text-muted);
+        }
+        .status-btn.green.active { border-color: var(--status-green); background-color: rgba(40, 167, 69, 0.1); color: var(--status-green); }
+        .status-btn.yellow.active { border-color: var(--status-yellow); background-color: rgba(255, 193, 7, 0.1); color: #d39e00; }
+        #rejectionReasonGroup { display: none; }
+        
+        .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .budget-item { display: flex; align-items: center; gap: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .budget-item label { flex: 1; font-size: 13px; font-weight: bold; }
+        .budget-item input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-weight: bold; }
+
+        @media print {
+            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .controls-bar, .header-actions, .modal-overlay, #loginOverlay { display: none !important; }
+            .top-header { border-bottom: 2px solid #0F4C5C; position: static; box-shadow: none; }
+            .kpi-card, .panel { break-inside: avoid; border: 1px solid #eee; box-shadow: none !important; margin-bottom: 20px; }
+            .main-content, .kpi-grid { padding: 15px 0; display: block; }
+            .smart-insights { margin: 15px 0; }
+            .chart-container canvas { max-height: 250px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- شاشة تسجيل الدخول -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2 class="brand-title" style="margin-bottom: 5px;">iDentist Analytics</h2>
+            <p class="brand-subtitle" style="margin-bottom: 25px;">بوابة الدخول الآمنة</p>
+            <div class="form-group">
+                <input type="email" id="loginEmail" class="form-input" placeholder="البريد الإلكتروني">
+            </div>
+            <div class="form-group">
+                <input type="password" id="loginPassword" class="form-input" placeholder="كلمة المرور">
+            </div>
+            <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="loginUser()" id="loginBtn">دخول</button>
+            <p id="loginError" style="color: #dc3545; font-size: 13px; margin-top: 15px; display: none;"></p>
+        </div>
+    </div>
+
+    <!-- واجهة النظام الرئيسية -->
+    <header class="top-header">
+        <div class="brand">
+            <span class="brand-title">iDentist Analytics</span>
+            <span class="brand-subtitle">Dr. Khaled Zedan | التقرير الإداري</span>
+        </div>
+        <div class="header-actions">
+            <span id="userDisplayInfo" style="font-size: 12px; font-weight: bold; color: var(--primary-dark); margin-left: 15px;"></span>
+            <button class="btn-outline" onclick="window.print()"><i class='bx bxs-file-pdf'></i> تصدير</button>
+            <button class="btn-outline btn-danger" id="managerToggleBtn" onclick="toggleManagerMode()">
+                <i class='bx bx-lock-alt'></i> <span>وضع المدير</span>
+            </button>
+            <button class="btn-outline" onclick="logoutUser()"><i class='bx bx-log-out'></i> خروج</button>
+        </div>
+    </header>
+
+    <div class="controls-bar">
+        <select class="filter-select" id="branchFilter">
+            <option value="all">كل الفروع (iDentist)</option>
+            <option value="عيادة Eterna">عيادة Eterna</option>
+            <option value="فرع مدينتي">فرع مدينتي</option>
+            <option value="فرع الزقازيق">فرع الزقازيق</option>
+            <option value="فرع الساحل الشمالي">فرع الساحل الشمالي</option>
+        </select>
+        <input type="month" id="dateFilter" class="filter-select">
+        <button class="btn-primary" id="openModalBtn" style="margin-right: auto;"><i class='bx bx-plus-circle'></i> تسجيل حالة</button>
+        <button class="btn-gold manager-only" onclick="openBudgetModal()"><i class='bx bx-dollar-circle'></i> إدخال الميزانية</button>
+    </div>
+
+    <div class="smart-insights">
+        <i class='bx bxs-bulb insight-icon'></i>
+        <div id="insightText"><strong>جاري الاتصال بالسيرفر السحابي الآمن...</strong></div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-title">إجمالي العملاء المحتملين</span>
+            <span class="kpi-value" id="kpiTotalLeads">0</span>
+        </div>
+        <div class="kpi-card" style="border-color: var(--primary-dark);">
+            <span class="kpi-title">معدل التحويل الإجمالي</span>
+            <span class="kpi-value" id="kpiConversionRate">0%</span>
+        </div>
+        <div class="kpi-card" style="border-color: var(--status-green);">
+            <span class="kpi-title">الحجوزات الفعلية الناجحة</span>
+            <span class="kpi-value" id="kpiTotalBookings">0</span>
+        </div>
+        <div class="kpi-card manager-only" style="border-color: var(--status-yellow); flex-direction: column;">
+            <span class="kpi-title">متوسط تكلفة المريض (CPA)</span>
+            <span class="kpi-value" id="kpiAvgCPA">-- ج.م</span>
+            <span style="font-size: 11px; color: var(--text-muted);" id="kpiTotalSpend">إجمالي الصرف: 0 ج.م</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="panel">
+            <h3 class="panel-title">مقارنة كفاءة القنوات التسويقية</h3>
+            <div class="chart-container"><canvas id="channelChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h3 class="panel-title">تحليل أسباب الرفض</h3>
+            <div class="chart-container"><canvas id="reasonChart"></canvas></div>
+        </div>
+        <div class="panel panel-full" id="branchComparisonPanel">
+            <h3 class="panel-title">مقارنة كفاءة الفروع</h3>
+            <div class="chart-container"><canvas id="branchChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- Modals (Lead Entry & Budgets) -->
+    <div class="modal-overlay" id="leadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">تسجيل حالة جديدة</span>
+                <button class="close-btn" onclick="closeModal('leadModal')"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="leadForm">
+                <div class="form-group">
+                    <label class="form-label">الفرع الحالي (تلقائي)</label>
+                    <input type="text" class="form-input" id="modalBranch" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">القناة التسويقية</label>
+                    <select class="form-input" id="modalChannel" required>
+                        <option value="" disabled selected>اختر القناة...</option>
+                        <option value="إعلان فيسبوك">إعلان فيسبوك</option>
+                        <option value="إعلان جوجل">إعلان جوجل</option>
+                        <option value="Chat GPT">Chat GPT</option>
+                        <option value="إحالة">إحالة</option>
+                        <option value="جروب ميفيدا">جروب ميفيدا</option>
+                        <option value="زيارة مباشرة">زيارة مباشرة</option>
+                        <option value="ترشيح صديق">ترشيح صديق</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الخدمة المطلوبة</label>
+                    <select class="form-input" id="modalService" required>
+                        <option value="" disabled selected>اختر الخدمة...</option>
+                        <option value="زراعة">زراعة</option>
+                        <option value="جراحة">جراحة</option>
+                        <option value="تركيبات">تركيبات</option>
+                        <option value="تجميل">تجميل</option>
+                        <option value="استشارة">استشارة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">حالة المتابعة</label>
+                    <div class="status-toggle">
+                        <button type="button" class="status-btn green" id="btnStatusGreen" onclick="setStatus('green')"><i class='bx bxs-check-circle'></i> حجز وحضر</button>
+                        <button type="button" class="status-btn yellow" id="btnStatusYellow" onclick="setStatus('yellow')"><i class='bx bxs-error-circle'></i> استفسار/لم يحجز</button>
+                    </div>
+                    <input type="hidden" id="modalStatus" required>
+                </div>
+                <div class="form-group" id="rejectionReasonGroup">
+                    <label class="form-label">سبب عدم الحجز</label>
+                    <select class="form-input" id="modalReason">
+                        <option value="" disabled selected>اختر السبب...</option>
+                        <option value="السعر مرتفع">السعر مرتفع</option>
+                        <option value="المواعيد غير مناسبة">المواعيد غير مناسبة</option>
+                        <option value="متردد / استشارة مكان آخر">متردد / استشارة مكان آخر</option>
+                        <option value="لم يتم الرد بسرعة">لم يتم الرد بسرعة</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-primary" style="width:100%; justify-content:center;" id="saveLeadBtn" onclick="saveNewLead()"><i class='bx bx-save'></i> حفظ البيانات سحابياً</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="budgetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">إدخال ميزانية التسويق</span>
+                <button class="close-btn" onclick="closeModal('budgetModal')"><i class='bx bx-x'></i></button>
+            </div>
+            <div style="margin-bottom: 15px; font-size: 13px; color: var(--primary-dark); font-weight: bold;">
+                الفرع: <span id="budgetBranchLabel"></span> | الشهر: <span id="budgetMonthLabel"></span>
+            </div>
+            <div class="budget-grid" id="budgetInputsContainer"></div>
+            <button type="button" class="btn-gold" style="width:100%; justify-content:center;" onclick="saveBudget()"><i class='bx bx-save'></i> حفظ الميزانية سحابياً</button>
+        </div>
+    </div>
+
+    <!-- كود الجافاسكريبت مع Authentication -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVN_9vsBFXmsy1lz1ECxcdgIMKvQM3xCo",
+            authDomain: "identist-analytics.firebaseapp.com",
+            projectId: "identist-analytics",
+            storageBucket: "identist-analytics.firebasestorage.app",
+            messagingSenderId: "968682601158",
+            appId: "1:968682601158:web:3643e19758c87df0e875c7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allLeads = [];
+        let allBudgets = {};
+        let channelChartObj = null; let reasonChartObj = null; let branchChartObj = null;
+        let isManagerMode = false; const MANAGER_PIN = "0000"; 
+        let unsubLeads = null; let unsubBudgets = null;
+
+        const branchFilter = document.getElementById('branchFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const insightText = document.getElementById('insightText');
+        const paidChannels = ["إعلان فيسبوك", "إعلان جوجل", "Chat GPT", "جروب ميفيدا"]; 
+        
+        // استعادة الفلاتر
+        const savedBranch = localStorage.getItem('identist_saved_branch');
+        const savedDate = localStorage.getItem('identist_saved_date');
+        if (savedBranch) branchFilter.value = savedBranch;
+        if (savedDate) dateFilter.value = savedDate;
+        else dateFilter.value = new Date().toISOString().slice(0, 7);
+
+        branchFilter.addEventListener('change', (e) => { localStorage.setItem('identist_saved_branch', e.target.value); updateDashboardView(); });
+        dateFilter.addEventListener('change', (e) => { localStorage.setItem('identist_saved_date', e.target.value); updateDashboardView(); });
+
+        // ==========================================
+        // نظام تسجيل الدخول (Authentication)
+        // ==========================================
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('userDisplayInfo').innerText = user.email;
+                startDataListeners(); // تفعيل سحب البيانات فقط بعد الدخول
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('loginEmail').value = "";
+                document.getElementById('loginPassword').value = "";
+                document.getElementById('userDisplayInfo').innerText = "";
+                if(unsubLeads) unsubLeads(); // إيقاف سحب البيانات
+                if(unsubBudgets) unsubBudgets();
+            }
+        });
+
+        window.loginUser = async function() {
+            const e = document.getElementById('loginEmail').value;
+            const p = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('loginError');
+            
+            if(!e || !p) { err.innerText = "أدخل البريد وكلمة المرور!"; err.style.display = "block"; return; }
+            
+            btn.innerText = "جاري التحقق...";
+            try {
+                await signInWithEmailAndPassword(auth, e, p);
+                err.style.display = "none";
+            } catch(error) {
+                err.innerText = "البيانات غير صحيحة أو الحساب غير موجود!";
+                err.style.display = "block";
+            }
+            btn.innerText = "دخول";
+        }
+
+        window.logoutUser = function() {
+            if(confirm("هل أنت متأكد من تسجيل الخروج؟")) { signOut(auth); }
+        }
+
+        // ==========================================
+        // جلب البيانات اللحظية (Real-time Listeners)
+        // ==========================================
+        function startDataListeners() {
+            unsubLeads = onSnapshot(collection(db, "leads"), (snapshot) => {
+                allLeads = [];
+                snapshot.forEach((doc) => { allLeads.push({ id: doc.id, ...doc.data() }); });
+                updateDashboardView();
+            }, (error) => { console.error("Error fetching leads: ", error); });
+
+            unsubBudgets = onSnapshot(collection(db, "budgets"), (snapshot) => {
+                allBudgets = {};
+                snapshot.forEach((doc) => { allBudgets[doc.id] = doc.data(); });
+                updateDashboardView();
+            }, (error) => { console.error("Error fetching budgets: ", error); });
+        }
+
+        // ==========================================
+        // وظائف الواجهة والأزرار
+        // ==========================================
+        window.toggleManagerMode = function() {
+            if (!isManagerMode) {
+                const pin = prompt("أدخل الرمز السري للمدير:");
+                if (pin === MANAGER_PIN) {
+                    isManagerMode = true; document.body.classList.add('manager-mode');
+                    document.getElementById('managerToggleBtn').innerHTML = "<i class='bx bx-lock-open-alt'></i> <span>إغلاق وضع المدير</span>";
+                    document.getElementById('managerToggleBtn').classList.remove('btn-danger');
+                    document.getElementById('managerToggleBtn').style.borderColor = "var(--status-green)";
+                    document.getElementById('managerToggleBtn').style.color = "var(--status-green)";
+                    updateDashboardView();
+                } else if (pin !== null) alert("الرمز السري غير صحيح!");
+            } else {
+                isManagerMode = false; document.body.classList.remove('manager-mode');
+                document.getElementById('managerToggleBtn').innerHTML = "<i class='bx bx-lock-alt'></i> <span>وضع المدير</span>";
+                document.getElementById('managerToggleBtn').classList.add('btn-danger');
+                document.getElementById('managerToggleBtn').style.borderColor = "";
+                document.getElementById('managerToggleBtn').style.color = "";
+            }
+        };
+
+        document.getElementById('openModalBtn').addEventListener('click', () => {
+            if(branchFilter.value === 'all') { alert("يرجى اختيار فرع محدد."); return; }
+            document.getElementById('modalBranch').value = branchFilter.options[branchFilter.selectedIndex].text;
+            document.getElementById('leadModal').classList.add('active');
+        });
+
+        window.closeModal = function(modalId) { document.getElementById(modalId).classList.remove('active'); if(modalId === 'leadModal') resetModalForm(); }
+
+        window.setStatus = function(status) {
+            document.getElementById('btnStatusGreen').classList.remove('active');
+            document.getElementById('btnStatusYellow').classList.remove('active');
+            document.getElementById('modalStatus').value = status;
+            if(status === 'green') {
+                document.getElementById('btnStatusGreen').classList.add('active');
+                document.getElementById('rejectionReasonGroup').style.display = 'none';
+                document.getElementById('modalReason').value = "";
+            } else {
+                document.getElementById('btnStatusYellow').classList.add('active');
+                document.getElementById('rejectionReasonGroup').style.display = 'block';
+            }
+        }
+
+        function resetModalForm() {
+            document.getElementById('leadForm').reset();
+            document.getElementById('btnStatusGreen').classList.remove('active');
+            document.getElementById('btnStatusYellow').classList.remove('active');
+            document.getElementById('modalStatus').value = "";
+            document.getElementById('rejectionReasonGroup').style.display = 'none';
+        }
+
+        // ==========================================
+        // الإرسال لقاعدة البيانات
+        // ==========================================
+        window.saveNewLead = async function() {
+            const branch = document.getElementById('modalBranch').value;
+            const channel = document.getElementById('modalChannel').value;
+            const service = document.getElementById('modalService').value;
+            const status = document.getElementById('modalStatus').value;
+            const reason = document.getElementById('modalReason').value;
+
+            if(!channel || !service || !status || (status === 'yellow' && !reason)) { alert("يرجى إكمال البيانات."); return; }
+            const btn = document.getElementById('saveLeadBtn'); btn.innerText = "جاري الحفظ...";
+
+            try {
+                await addDoc(collection(db, "leads"), {
+                    monthKey: new Date().toISOString().slice(0, 7),
+                    branch: branch, channel: channel, service: service, status: status, reason: reason || null,
+                    timestamp: new Date().getTime(),
+                    recordedBy: auth.currentUser.email
+                });
+                closeModal('leadModal');
+            } catch (e) { alert("خطأ في الاتصال بالسيرفر! يرجى التأكد من صلاحيات الحساب."); console.error(e); }
+            btn.innerHTML = "<i class='bx bx-save'></i> حفظ البيانات سحابياً";
+        }
+
+        window.openBudgetModal = function() {
+            if(branchFilter.value === 'all') { alert("يرجى اختيار فرع محدد أولاً."); return; }
+            document.getElementById('budgetBranchLabel').innerText = branchFilter.options[branchFilter.selectedIndex].text;
+            document.getElementById('budgetMonthLabel').innerText = dateFilter.value;
+            
+            const budgetKey = `budget_${branchFilter.value}_${dateFilter.value}`;
+            const currentBudget = allBudgets[budgetKey] || {};
+
+            const container = document.getElementById('budgetInputsContainer');
+            container.innerHTML = "";
+            paidChannels.forEach(ch => {
+                const val = currentBudget[ch] || 0;
+                container.innerHTML += `<div class="budget-item"><label>${ch}</label><input type="number" id="budgetInput_${ch}" value="${val}" min="0"></div>`;
+            });
+            document.getElementById('budgetModal').classList.add('active');
+        }
+
+        window.saveBudget = async function() {
+            const budgetKey = `budget_${branchFilter.value}_${dateFilter.value}`;
+            let currentBudget = {};
+            paidChannels.forEach(ch => { currentBudget[ch] = parseFloat(document.getElementById(`budgetInput_${ch}`).value) || 0; });
+            
+            try { await setDoc(doc(db, "budgets", budgetKey), currentBudget); closeModal('budgetModal'); } 
+            catch(e) { alert("خطأ في حفظ الميزانية."); }
+        }
+
+        // ==========================================
+        // التحديث والرسم
+        // ==========================================
+        function updateDashboardView() {
+            const branchText = branchFilter.options[branchFilter.selectedIndex].text;
+            const branchVal = branchFilter.value;
+            const monthVal = dateFilter.value;
+            
+            let filteredLeads = allLeads.filter(l => (branchVal === 'all' || l.branch === branchText) && l.monthKey === monthVal);
+
+            const totalLeads = filteredLeads.length;
+            const totalBookings = filteredLeads.filter(l => l.status === 'green').length;
+            const conversionRate = totalLeads > 0 ? Math.round((totalBookings / totalLeads) * 100) : 0;
+
+            document.getElementById('kpiTotalLeads').innerText = totalLeads;
+            document.getElementById('kpiTotalBookings').innerText = totalBookings;
+            document.getElementById('kpiConversionRate').innerText = conversionRate + "%";
+
+            const branchPanel = document.getElementById('branchComparisonPanel');
+            branchPanel.style.display = (branchVal === 'all') ? 'flex' : 'none';
+
+            if(isManagerMode) {
+                let totalSpend = 0;
+                if (branchVal === 'all') {
+                    Object.keys(allBudgets).forEach(key => {
+                        if (key.endsWith(`_${monthVal}`)) Object.values(allBudgets[key]).forEach(val => totalSpend += val);
+                    });
+                } else {
+                    const budgetKey = `budget_${branchVal}_${monthVal}`;
+                    if (allBudgets[budgetKey]) Object.values(allBudgets[budgetKey]).forEach(val => totalSpend += val);
+                }
+                const cpa = totalBookings > 0 ? Math.round(totalSpend / totalBookings) : 0;
+                document.getElementById('kpiAvgCPA').innerText = cpa.toLocaleString() + " ج.م";
+                document.getElementById('kpiTotalSpend').innerText = `إجمالي الصرف: ${totalSpend.toLocaleString()} ج.م`;
+                insightText.innerHTML = `<strong>نظرة المدير:</strong> تكلفة اكتساب المريض الفعلي (CPA) تبلغ ${cpa} ج.م. (متصل بالسيرفر ✅)`;
+            } else {
+                insightText.innerHTML = `<strong>متصل بالسيرفر ✅:</strong> عرض إحصائيات ${branchText}.`;
+            }
+
+            drawCharts(filteredLeads, allLeads.filter(l => l.monthKey === monthVal), branchVal);
+        }
+
+        function drawCharts(data, allMonthData, branchVal) {
+            const channels = ["إعلان فيسبوك", "إعلان جوجل", "Chat GPT", "إحالة", "جروب ميفيدا", "زيارة مباشرة", "ترشيح صديق"];
+            let leadsPerChannel = []; let bookingsPerChannel = [];
+            channels.forEach(ch => {
+                leadsPerChannel.push(data.filter(l => l.channel === ch).length);
+                bookingsPerChannel.push(data.filter(l => l.channel === ch && l.status === 'green').length);
+            });
+
+            const reasonsMap = {};
+            data.filter(l => l.status === 'yellow').forEach(l => { reasonsMap[l.reason] = (reasonsMap[l.reason] || 0) + 1; });
+            const reasonLabels = Object.keys(reasonsMap); const reasonData = Object.values(reasonsMap);
+
+            if (channelChartObj) channelChartObj.destroy();
+            if (reasonChartObj) reasonChartObj.destroy();
+            if (branchChartObj) branchChartObj.destroy();
+
+            Chart.defaults.font.family = 'Tajawal';
+
+            const ctxChannel = document.getElementById('channelChart').getContext('2d');
+            channelChartObj = new Chart(ctxChannel, {
+                type: 'bar', data: { labels: channels, datasets: [
+                    { label: 'إجمالي Leads', data: leadsPerChannel, backgroundColor: '#0F4C5C', borderRadius: 4 },
+                    { label: 'حجوزات فعلية', data: bookingsPerChannel, backgroundColor: '#C5A880', borderRadius: 4 }
+                ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+
+            const ctxReason = document.getElementById('reasonChart').getContext('2d');
+            if(reasonLabels.length > 0) {
+                reasonChartObj = new Chart(ctxReason, { type: 'doughnut', data: { labels: reasonLabels, datasets: [{ data: reasonData, backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#1A535C'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+            } else {
+                reasonChartObj = new Chart(ctxReason, { type: 'doughnut', data: { labels: ['لا يوجد رفض'], datasets: [{ data: [1], backgroundColor: ['#EDF2F4'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { enabled: false } } } });
+            }
+
+            if (branchVal === 'all') {
+                const branchNames = ["عيادة Eterna", "فرع مدينتي", "فرع الزقازيق", "فرع الساحل الشمالي"];
+                let bLeads = []; let bBookings = [];
+                branchNames.forEach(b => {
+                    bLeads.push(allMonthData.filter(l => l.branch === b).length);
+                    bBookings.push(allMonthData.filter(l => l.branch === b && l.status === 'green').length);
+                });
+                const ctxBranch = document.getElementById('branchChart').getContext('2d');
+                branchChartObj = new Chart(ctxBranch, {
+                    type: 'bar', data: { labels: branchNames, datasets: [
+                        { label: 'العملاء المحتملين', data: bLeads, backgroundColor: '#8D99AE', borderRadius: 4 },
+                        { label: 'الحجوزات الفعلية', data: bBookings, backgroundColor: '#28A745', borderRadius: 4 }
+                    ]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
