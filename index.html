@@ -381,17 +381,20 @@ const analytics = getAnalytics(app);
         // ==========================================
         // نظام تسجيل الدخول (Authentication)
         // ==========================================
-        onAuthStateChanged(auth, (user) => {
+       onAuthStateChanged(auth, (user) => {
+            const loginOverlay = document.getElementById('loginOverlay');
             if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
+                // إخفاء شاشة الدخول نهائياً عند تسجيل الدخول
+                loginOverlay.style.display = 'none';
                 document.getElementById('userDisplayInfo').innerText = user.email;
-                startDataListeners(); // تفعيل سحب البيانات فقط بعد الدخول
+                startDataListeners();
             } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
+                // إظهار شاشة الدخول إذا لم يكن مسجلاً
+                loginOverlay.style.display = 'flex';
                 document.getElementById('loginEmail').value = "";
                 document.getElementById('loginPassword').value = "";
                 document.getElementById('userDisplayInfo').innerText = "";
-                if(unsubLeads) unsubLeads(); // إيقاف سحب البيانات
+                if(unsubLeads) unsubLeads();
                 if(unsubBudgets) unsubBudgets();
             }
         });
